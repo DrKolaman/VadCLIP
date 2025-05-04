@@ -88,7 +88,7 @@ class GraphConvolution(Module):
 
     def forward(self, input, adj):
         # To support batch operations
-        support = input.matmul(self.weight)
+        support = input.matmul(self.weight) # matching weights multiplication and summarized by each embedding vector
         output = adj.matmul(support)
 
         if self.bias is not None:

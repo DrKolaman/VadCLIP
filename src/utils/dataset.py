@@ -30,7 +30,7 @@ class UCFDataset(data.Dataset):
 
         clip_feature = torch.tensor(clip_feature)
         clip_label = self.df.loc[index]['label']
-        return clip_feature, clip_label, clip_length
+        return clip_feature, clip_label, clip_length, self.df.loc[index]['path']
 
 class XDDataset(data.Dataset):
     def __init__(self, clip_dim: int, file_path: str, test_mode: bool, label_map: dict):

@@ -169,9 +169,9 @@ class CLIPVAD(nn.Module):
         x, _ = self.temporal((images, None))
         x = x.permute(1, 0, 2)
 
-        adj = self.adj4(x, lengths)
-        disadj = self.disAdj(x.shape[0], x.shape[1])
-        x1_h = self.gelu(self.gc1(x, adj))
+        adj = self.adj4(x, lengths) # inner multiplication temporal embedding
+        disadj = self.disAdj(x.shape[0], x.shape[1]) # exponential distance for each frame to each frame
+        x1_h = self.gelu(self.gc1(x, adj)) # temporal embedding, inner multiplication
         x2_h = self.gelu(self.gc3(x, disadj))
 
         x1 = self.gelu(self.gc2(x1_h, adj))
@@ -207,18 +207,18 @@ class CLIPVAD(nn.Module):
 
         text_features = text_features_ori
         logits_attn = logits1.permute(0, 2, 1)
-        visual_attn = logits_attn @ visual_features
-        visual_attn = visual_attn / visual_attn.norm(dim=-1, keepdim=True)
+        visual_attn = logits_attn @ visual_features # aggregation
+        visual_attn = visual_attn / visual_attn.norm(dim=-1, keepdim=True) # normalization
         visual_attn = visual_attn.expand(visual_attn.shape[0], text_features_ori.shape[0], visual_attn.shape[2])
         text_features = text_features_ori.unsqueeze(0)
         text_features = text_features.expand(visual_attn.shape[0], text_features.shape[1], text_features.shape[2])
-        text_features = text_features + visual_attn
-        text_features = text_features + self.mlp1(text_features)
+        text_features = text_features + visual_attn  # ADD (7)
+        text_features = text_features + self.mlp1(text_features) # T in the paper (7)
 
         visual_features_norm = visual_features / visual_features.norm(dim=-1, keepdim=True)
         text_features_norm = text_features / text_features.norm(dim=-1, keepdim=True)
         text_features_norm = text_features_norm.permute(0, 2, 1)
-        logits2 = visual_features_norm @ text_features_norm.type(visual_features_norm.dtype) / 0.07
+        logits2 = visual_features_norm @ text_features_norm.type(visual_features_norm.dtype) / 0.07 # MIL ALIGN
 
         return text_features_ori, logits1, logits2
     
